@@ -30,7 +30,7 @@ namespace NoMoreClick
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-                if (UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > 400)
+                if (UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > 385)
                 {
                     LeftMouseClick(Cursor.Position);
                 }
