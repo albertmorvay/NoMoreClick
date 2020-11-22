@@ -74,6 +74,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -91,6 +92,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="click-ico-by-pixel-perfect-from-flaticon.ico" />
+    <None Include="Resources\mouse-assist-off.wav" />
+    <None Include="Resources\mouse-assist-on.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

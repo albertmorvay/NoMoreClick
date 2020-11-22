@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
+using System.Media;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
 
@@ -9,11 +12,11 @@ namespace NoMoreClick
 {
     public partial class FormMain : Form
     {
-
         private IKeyboardMouseEvents m_Events;
         public static Point pointLastMousePosition;
         public static Point pointLastMouseClickPosition;
         private static System.Timers.Timer aTimer;
+        private static System.Timers.Timer TimerToggleMouseClickAssistance;
         private bool mouseIsBeingDragged = false;
         private DateTime dateTimeLastKeyboardInput = DateTime.UtcNow;
         private bool lastMouseClickWasARightClick = false;
@@ -31,7 +34,7 @@ namespace NoMoreClick
         private void SetTimer()
         {
             // Create a timer with a two second interval.
-            aTimer = new System.Timers.Timer(20);
+            aTimer = new System.Timers.Timer(10);
             // Hook up the Elapsed event for the timer. 
             aTimer.Elapsed += OnTimedEvent;
             aTimer.AutoReset = true;
@@ -40,15 +43,15 @@ namespace NoMoreClick
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            var mouseClickDelayInMilliseconds = 360;
+            var mouseClickDelayInMilliseconds = 280;
             if (lastMouseClickWasARightClick)
             {
                 mouseClickDelayInMilliseconds = 1080;            }
-            if (mouseClickAssistanceEnabled
-                && UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > mouseClickDelayInMilliseconds 
-                && !mouseIsBeingDragged
-                && !userWasJustTyping())
-            {
+                if (mouseClickAssistanceEnabled
+                    && UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > mouseClickDelayInMilliseconds 
+                    && !mouseIsBeingDragged
+                    && !userWasJustTyping())
+                {
                 LeftMouseClick(Cursor.Position);
             }
         }
@@ -125,6 +128,7 @@ namespace NoMoreClick
             if (e.Button == MouseButtons.Right)
             {
                 dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
+                SetTimerToggleMouseClickAssistance();
             }
         }
 
@@ -133,11 +137,24 @@ namespace NoMoreClick
             if (e.Button == MouseButtons.Right)
             {
                 TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTimeRightMouseClickPressedDown);
-                if (timeSpan.TotalMilliseconds > 800)
-                {
-                    ToggleMouseClickAssistance();
-                }
+                TimerToggleMouseClickAssistance.Dispose();
             }
+        }
+
+        private void SetTimerToggleMouseClickAssistance()
+        {
+            // Create a timer with a two second interval.
+            TimerToggleMouseClickAssistance = new System.Timers.Timer(1080);
+            // Hook up the Elapsed event for the timer. 
+            TimerToggleMouseClickAssistance.Elapsed += OnTimedEventTimerToggleMouseClickAssistance;
+            TimerToggleMouseClickAssistance.AutoReset = false;
+            TimerToggleMouseClickAssistance.Enabled = true;
+        }
+
+        private void OnTimedEventTimerToggleMouseClickAssistance(Object source, ElapsedEventArgs e)
+        {
+            ToggleMouseClickAssistance();
+            TimerToggleMouseClickAssistance.Dispose();
         }
 
         private void ToggleMouseClickAssistance()
@@ -145,10 +162,12 @@ namespace NoMoreClick
             if(mouseClickAssistanceEnabled)
             {
                 mouseClickAssistanceEnabled = false;
+                PlaySound(Properties.Resources.mouse_assist_off);
             }
             else
             {
                 mouseClickAssistanceEnabled = true;
+                PlaySound(Properties.Resources.mouse_assist_on);
             }
         }
 
@@ -190,6 +209,14 @@ namespace NoMoreClick
         private void linkLabelAttributionIconPart2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://www.flaticon.com/");
+        }
+
+        private async void PlaySound(Stream stream)
+        {
+            using (SoundPlayer player = new SoundPlayer(stream))
+            {
+                await Task.Run(() => player.Play());
+            }
         }
 
         private void FormMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)

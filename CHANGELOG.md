@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
-## 0.3.0 - 2020-08-30
+## 0.4.0 - 2020-11-10
+### Added
+- The toggeling of mouse click assistance plays an English audio notification providing user feedback on whether the functionality is on or off.
+### Changed
+- mouseClickDelayInMilliseconds reduced from 360 to 280 to trigger a mouse click faster creating a more responsive experience.
+- The interval of the timer was decreased from 20 to 10 to improve sensitivity.
+
+## 0.3.0 - 2020-11-10
 ### Added
 - Right-click mouse for 1 second to toggle mouse click assistance on or off.
 - No click immediately after typing to prevent accidental click if mouse moved whilst typing.
