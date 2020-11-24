@@ -22,6 +22,7 @@ namespace NoMoreClick
         private bool lastMouseClickWasARightClick = false;
         private bool mouseClickAssistanceEnabled = true;
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
+        private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
 
         public FormMain()
         {
@@ -50,7 +51,8 @@ namespace NoMoreClick
                 if (mouseClickAssistanceEnabled
                     && UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > mouseClickDelayInMilliseconds 
                     && !mouseIsBeingDragged
-                    && !userWasJustTyping())
+                    && !userWasJustTyping()
+                    && !userWasJustScrolling())
                 {
                 LeftMouseClick(Cursor.Position);
             }
@@ -98,7 +100,7 @@ namespace NoMoreClick
             m_Events.MouseUp += OnMouseUp;
             m_Events.MouseDragStarted += OnMouseDragStarted;
             m_Events.MouseDragFinished += OnMouseDragFinished;
-
+            m_Events.MouseWheel += HookManager_MouseWheel;
         }
 
         private void Unsubscribe()
@@ -111,6 +113,7 @@ namespace NoMoreClick
             m_Events.MouseUp -= OnMouseUp;
             m_Events.MouseDragStarted -= OnMouseDragStarted;
             m_Events.MouseDragFinished -= OnMouseDragFinished;
+            m_Events.MouseWheel -= HookManager_MouseWheel;
 
             m_Events.Dispose();
             m_Events = null;
@@ -139,6 +142,10 @@ namespace NoMoreClick
                 TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTimeRightMouseClickPressedDown);
                 TimerToggleMouseClickAssistance.Dispose();
             }
+        }
+        private void HookManager_MouseWheel(object sender, MouseEventArgs e)
+        {
+            dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
         }
 
         private void SetTimerToggleMouseClickAssistance()
@@ -191,12 +198,35 @@ namespace NoMoreClick
         {
             var result = false;
 
-            TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTimeLastKeyboardInput);
-            if (timeSpan.TotalMilliseconds < 1000)
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastKeyboardInput, 1000))
             {
                 result = true;
                 SetLastMouseClickPosition();
             }
+
+            return result;
+        }
+
+        private bool userWasJustScrolling()
+        {
+            var result = false;
+
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastMouseScrollWheelInput,1000))
+            {
+                result = true;
+                SetLastMouseClickPosition();
+            }
+
+            return result;
+        }
+
+        private bool DateTimeUtcIsWithinMillisecondsOfNowUtc(DateTime dateTimeUtc, int milliseconds)
+        {
+            var result = false;
+
+            TimeSpan timeSpan = DateTime.UtcNow.Subtract(dateTimeUtc);
+            if (timeSpan.TotalMilliseconds < milliseconds)
+                result = true;
 
             return result;
         }

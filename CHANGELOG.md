@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
-## 0.4.0 - 2020-11-10
+## 0.5.0 - 2020-11-23
+### Added
+- No Click After Mouse Wheel Scroll preventing accidental click.
+
+## 0.4.0 - 2020-11-23
 ### Added
 - The toggeling of mouse click assistance plays an English audio notification providing user feedback on whether the functionality is on or off.
 ### Changed
