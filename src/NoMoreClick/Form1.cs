@@ -21,6 +21,7 @@ namespace NoMoreClick
         private DateTime dateTimeLastKeyboardInput = DateTime.UtcNow;
         private bool lastMouseClickWasARightClick = false;
         private bool mouseClickAssistanceEnabled = true;
+        private DateTime dateTimeLeftMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
 
@@ -35,7 +36,7 @@ namespace NoMoreClick
         private void SetTimer()
         {
             // Create a timer with a two second interval.
-            aTimer = new System.Timers.Timer(10);
+            aTimer = new System.Timers.Timer(100);
             // Hook up the Elapsed event for the timer. 
             aTimer.Elapsed += OnTimedEvent;
             aTimer.AutoReset = true;
@@ -44,11 +45,12 @@ namespace NoMoreClick
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            var mouseClickDelayInMilliseconds = 280;
+            var mouseClickDelayInMilliseconds = 300;
             if (lastMouseClickWasARightClick)
             {
-                mouseClickDelayInMilliseconds = 1080;            }
+                mouseClickDelayInMilliseconds = 1200;            }
                 if (mouseClickAssistanceEnabled
+                    && !userJustClicked()
                     && UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > mouseClickDelayInMilliseconds 
                     && !mouseIsBeingDragged
                     && !userWasJustTyping()
@@ -123,7 +125,10 @@ namespace NoMoreClick
         {
             lastMouseClickWasARightClick = false;
             if (e.Button == MouseButtons.Right)
-                lastMouseClickWasARightClick = true;
+              lastMouseClickWasARightClick = true;
+
+            if(e.Button == MouseButtons.Left)
+                dateTimeLeftMouseClickPressedDown = DateTime.UtcNow;
         }
 
         private void OnMouseDown(object sender, MouseEventArgs e)
@@ -212,6 +217,19 @@ namespace NoMoreClick
             var result = false;
 
             if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastMouseScrollWheelInput,1000))
+            {
+                result = true;
+                SetLastMouseClickPosition();
+            }
+
+            return result;
+        }
+
+        private bool userJustClicked()
+        {
+            var result = false;
+
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLeftMouseClickPressedDown, 600))
             {
                 result = true;
                 SetLastMouseClickPosition();
