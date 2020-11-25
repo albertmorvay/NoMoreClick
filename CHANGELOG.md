@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.6.0 - 2020-11-25
+### Added
+- No Accidental Click after Physical User Left Click
+
 ## 0.5.0 - 2020-11-23
 ### Added
 - No Click After Mouse Wheel Scroll preventing accidental click.
