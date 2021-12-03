@@ -24,6 +24,8 @@ namespace NoMoreClick
         private DateTime dateTimeLeftMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
+        private bool mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = false;
+        private int clickDeadZoneRadiusAroundPreviousMousePosition = 20;
 
         public FormMain()
         {
@@ -45,6 +47,11 @@ namespace NoMoreClick
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
+            if (!MouseStillNearToWhereMouseWasBefore(Cursor.Position, pointLastMouseClickPosition, clickDeadZoneRadiusAroundPreviousMousePosition))
+            {
+                mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = true;
+            }
+
             var mouseClickDelayInMilliseconds = 300;
             if (lastMouseClickWasARightClick)
             {
@@ -63,6 +70,7 @@ namespace NoMoreClick
         private void SetLastMouseClickPosition()
         {
             pointLastMouseClickPosition = Cursor.Position;
+            mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = false;
         }
 
         private bool MouseStillNearToWhereMouseWasBefore(Point pointCurrentMousePosition, Point pointPreviousMousePosition, int radiusAroundPreviousMousePosition)
@@ -78,7 +86,12 @@ namespace NoMoreClick
 
         private void LeftMouseClick(Point pointToClick)
         {
-            if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition,20))
+            if (mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick)
+            {
+                MouseClickUtility.LeftClick(pointToClick);
+                SetLastMouseClickPosition();
+            }
+            else if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition, clickDeadZoneRadiusAroundPreviousMousePosition))
             {
                 MouseClickUtility.LeftClick(pointToClick);
                 SetLastMouseClickPosition();
