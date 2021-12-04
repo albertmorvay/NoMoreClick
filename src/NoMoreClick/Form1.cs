@@ -5,7 +5,7 @@ using System.Media;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
-
+using Config.Net;
 using Gma.System.MouseKeyHook;
 
 namespace NoMoreClick
@@ -25,10 +25,29 @@ namespace NoMoreClick
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
         private bool mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = false;
-        private int clickDeadZoneRadiusAroundPreviousMousePosition = 20;
+        private int postClickDeadzoneRadius;
+        private int clickDelayMs;
+        private int clickDelayAfterRightClickMs;
+        private int toggleClickAssistanceMs;
+        private int noClickAfterTypingMs;
+        private int noClickAfterScrollingMs;
+        private int noClickAfterPhysicalMouseClickMs;
+        private IMySettings settings;
 
         public FormMain()
         {
+            settings = new ConfigurationBuilder<IMySettings>()
+               .UseJsonConfig()
+               .Build();
+
+            postClickDeadzoneRadius = settings.PostClickDeadzoneRadius;
+            clickDelayMs = settings.ClickDelayMs;
+            clickDelayAfterRightClickMs = settings.ClickDelayAfterRightClickMs;
+            toggleClickAssistanceMs = settings.ToggleClickAssistanceMs;
+            noClickAfterTypingMs = settings.NoClickAfterTypingMs;
+            noClickAfterScrollingMs = settings.NoClickAfterScrollingMs;
+            noClickAfterPhysicalMouseClickMs = settings.NoClickAfterPhysicalMouseClickMs;
+
             InitializeComponent();
             SetLastMouseClickPosition();
             SetTimer();
@@ -47,15 +66,15 @@ namespace NoMoreClick
 
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
-            if (!MouseStillNearToWhereMouseWasBefore(Cursor.Position, pointLastMouseClickPosition, clickDeadZoneRadiusAroundPreviousMousePosition))
+            if (!MouseStillNearToWhereMouseWasBefore(Cursor.Position, pointLastMouseClickPosition, postClickDeadzoneRadius))
             {
                 mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = true;
             }
 
-            var mouseClickDelayInMilliseconds = 300;
+            var mouseClickDelayInMilliseconds = clickDelayMs;
             if (lastMouseClickWasARightClick)
             {
-                mouseClickDelayInMilliseconds = 1200;            }
+                mouseClickDelayInMilliseconds = clickDelayAfterRightClickMs;            }
                 if (mouseClickAssistanceEnabled
                     && !userJustClicked()
                     && UserIdleTimeUtility.GetTotalMillisecondsSinceLastMouseKeyboardInteraction() > mouseClickDelayInMilliseconds 
@@ -91,7 +110,7 @@ namespace NoMoreClick
                 MouseClickUtility.LeftClick(pointToClick);
                 SetLastMouseClickPosition();
             }
-            else if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition, clickDeadZoneRadiusAroundPreviousMousePosition))
+            else if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition, postClickDeadzoneRadius))
             {
                 MouseClickUtility.LeftClick(pointToClick);
                 SetLastMouseClickPosition();
@@ -169,7 +188,7 @@ namespace NoMoreClick
         private void SetTimerToggleMouseClickAssistance()
         {
             // Create a timer with a two second interval.
-            TimerToggleMouseClickAssistance = new System.Timers.Timer(1080);
+            TimerToggleMouseClickAssistance = new System.Timers.Timer(toggleClickAssistanceMs);
             // Hook up the Elapsed event for the timer. 
             TimerToggleMouseClickAssistance.Elapsed += OnTimedEventTimerToggleMouseClickAssistance;
             TimerToggleMouseClickAssistance.AutoReset = false;
@@ -216,7 +235,7 @@ namespace NoMoreClick
         {
             var result = false;
 
-            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastKeyboardInput, 1000))
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastKeyboardInput, noClickAfterTypingMs)) 
             {
                 result = true;
                 SetLastMouseClickPosition();
@@ -229,7 +248,7 @@ namespace NoMoreClick
         {
             var result = false;
 
-            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastMouseScrollWheelInput,1000))
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLastMouseScrollWheelInput, noClickAfterScrollingMs))
             {
                 result = true;
                 SetLastMouseClickPosition();
@@ -242,7 +261,7 @@ namespace NoMoreClick
         {
             var result = false;
 
-            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLeftMouseClickPressedDown, 600))
+            if (DateTimeUtcIsWithinMillisecondsOfNowUtc(dateTimeLeftMouseClickPressedDown, noClickAfterPhysicalMouseClickMs))
             {
                 result = true;
                 SetLastMouseClickPosition();

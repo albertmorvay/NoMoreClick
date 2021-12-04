@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.8.0 - 2021-12-04
+### Added
+- Click same spot after moving mouse outside of 20 pixel dead zone around last click position without stopping to register a click. 
+
 ## 0.7.0 - 2021-12-03
 ### Added
 - Click same spot after moving mouse outside of 20 pixel dead zone around last click position without stopping to register a click. 
