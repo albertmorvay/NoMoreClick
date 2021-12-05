@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.9.0 - 2021-12-05
+### Added
+- Appears in icon tray instead of taskbar, minimize overwritten for smoother transition to icon tray.
+- Form location moved to just above icon tray.
+- Minimal context menu added to icon tray icon allowing the application to be restored and closed.
+
 ## 0.8.0 - 2021-12-04
 ### Added
 - Added configuration.json file to enable easier fine tuning of the application. 
