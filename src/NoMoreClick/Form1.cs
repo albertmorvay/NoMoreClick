@@ -36,6 +36,8 @@ namespace NoMoreClick
 
         public FormMain()
         {
+            SetWindowLocationBottomRightAboveIconTray();
+
             settings = new ConfigurationBuilder<IMySettings>()
                .UseJsonConfig()
                .Build();
@@ -302,6 +304,52 @@ namespace NoMoreClick
         private void FormMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Unsubscribe();
+        }
+
+        private void SetWindowLocationBottomRightAboveIconTray()
+        {
+            Rectangle primaryScreenWorkingArea = Screen.PrimaryScreen.Bounds;
+            this.Location = new Point(primaryScreenWorkingArea.Right - this.Size.Width -13,
+                                      primaryScreenWorkingArea.Bottom - (this.Size.Height - 27));
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            // Catch WM_SYSCOMMAND, SC_MINIMIZE
+            if (m.Msg == 0x112 && m.WParam.ToInt32() == 0xf020)
+            {
+                MinimizeForm();
+                return;
+            }
+            base.WndProc(ref m);
+        }
+
+        private void MinimizeForm()
+        {
+            Hide();
+            WindowState = FormWindowState.Minimized;
+        }
+
+        private void RestoreForm()
+        {
+            Show();
+            BringToFront();
+            WindowState = FormWindowState.Normal;
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            RestoreForm();
+        }
+
+        private void restoreToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RestoreForm();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }
