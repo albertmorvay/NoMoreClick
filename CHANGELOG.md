@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.9.1 - 2021-12-05
+### Changed
+- Default values in configuration changed to better suite my personal preferences.
+
 ## 0.9.0 - 2021-12-05
 ### Added
 - Appears in icon tray instead of taskbar, minimize overwritten for smoother transition to icon tray.
