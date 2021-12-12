@@ -25,13 +25,13 @@ namespace NoMoreClick
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
         private bool mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick = false;
-        private int postClickDeadzoneRadius;
-        private int clickDelayMs;
-        private int clickDelayAfterRightClickMs;
-        private int toggleClickAssistanceMs;
-        private int noClickAfterTypingMs;
-        private int noClickAfterScrollingMs;
-        private int noClickAfterPhysicalMouseClickMs;
+        private int postClickDeadzoneRadius = 20;
+        private int clickDelayMs = 200;
+        private int clickDelayAfterRightClickMs = 600;
+        private int toggleClickAssistanceMs = 1080;
+        private int noClickAfterTypingMs = 1000;
+        private int noClickAfterScrollingMs = 1000;
+        private int noClickAfterPhysicalMouseClickMs = 600;
         private MemoryStream customMouseAssistOnSound = new MemoryStream();
         private MemoryStream customMouseAssistOffSound = new MemoryStream();
         private IMySettings settings;
@@ -44,13 +44,20 @@ namespace NoMoreClick
                .UseJsonConfig()
                .Build();
 
-            postClickDeadzoneRadius = settings.PostClickDeadzoneRadius;
-            clickDelayMs = settings.ClickDelayMs;
-            clickDelayAfterRightClickMs = settings.ClickDelayAfterRightClickMs;
-            toggleClickAssistanceMs = settings.ToggleClickAssistanceMs;
-            noClickAfterTypingMs = settings.NoClickAfterTypingMs;
-            noClickAfterScrollingMs = settings.NoClickAfterScrollingMs;
-            noClickAfterPhysicalMouseClickMs = settings.NoClickAfterPhysicalMouseClickMs;
+            if(settings.PostClickDeadzoneRadius > 0)
+                postClickDeadzoneRadius = settings.PostClickDeadzoneRadius;
+            if (settings.ClickDelayMs > 99)
+                clickDelayMs = settings.ClickDelayMs;
+            if (settings.ClickDelayAfterRightClickMs > 99)
+                clickDelayAfterRightClickMs = settings.ClickDelayAfterRightClickMs;
+            if (settings.ToggleClickAssistanceMs > 99)
+                toggleClickAssistanceMs = settings.ToggleClickAssistanceMs;
+            if (settings.NoClickAfterTypingMs > 99)
+                noClickAfterTypingMs = settings.NoClickAfterTypingMs;
+            if (settings.NoClickAfterScrollingMs > 99)
+                noClickAfterScrollingMs = settings.NoClickAfterScrollingMs;
+            if (settings.NoClickAfterPhysicalMouseClickMs > 99)
+                noClickAfterPhysicalMouseClickMs = settings.NoClickAfterPhysicalMouseClickMs;
 
             if (!string.IsNullOrWhiteSpace(settings.WavFileLocationMouseAssistOn) && settings.WavFileLocationMouseAssistOn.IndexOfAny(Path.GetInvalidPathChars()) == -1)
             {
