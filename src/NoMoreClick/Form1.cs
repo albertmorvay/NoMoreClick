@@ -373,12 +373,15 @@ namespace NoMoreClick
         private void MinimizeForm()
         {
             Hide();
+            ShowInTaskbar = false;
             WindowState = FormWindowState.Minimized;
+            notifyIcon1.ShowBalloonTip(3000);
         }
 
         private void RestoreForm()
         {
             Show();
+            ShowInTaskbar = true;
             BringToFront();
             WindowState = FormWindowState.Normal;
         }

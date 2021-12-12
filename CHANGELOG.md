@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.11.0 - 2021-12-12
+### Added
+- Now starts normally and also shows up in the taskbar, providing visual feedback that the application has launched. When minimizing, a notification is shown informing the user that the application is still running and can be found in the taskbar notification area. 
+
 ## 0.10.0 - 2021-12-12
 ### Added
 - Using the config file it is possible to specify two custom .wav (Waveform Audio File Format) file paths which will be played respectively to provide feedback when you have held down the right mouse button long enough to register intent to turn mouse click assistance on or off. Removing the properties, specifying an empty string as the value e.g. "", or specifying an invalid file path e.g. to a file that does not exist or failing to properly escape a backslash by doubling it up \\, will result in the built in sounds being played. 
