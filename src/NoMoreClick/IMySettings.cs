@@ -11,6 +11,7 @@ namespace NoMoreClick
         int NoClickAfterTypingMs { get; }
         int NoClickAfterScrollingMs { get; }
         int NoClickAfterPhysicalMouseClickMs { get; }
+        string WavFileLocationMouseAssistOn { get; }
+        string WavFileLocationMouseAssistOff { get; }
     }
-
 }

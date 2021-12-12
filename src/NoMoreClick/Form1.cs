@@ -32,6 +32,8 @@ namespace NoMoreClick
         private int noClickAfterTypingMs;
         private int noClickAfterScrollingMs;
         private int noClickAfterPhysicalMouseClickMs;
+        private MemoryStream customMouseAssistOnSound = new MemoryStream();
+        private MemoryStream customMouseAssistOffSound = new MemoryStream();
         private IMySettings settings;
 
         public FormMain()
@@ -49,6 +51,35 @@ namespace NoMoreClick
             noClickAfterTypingMs = settings.NoClickAfterTypingMs;
             noClickAfterScrollingMs = settings.NoClickAfterScrollingMs;
             noClickAfterPhysicalMouseClickMs = settings.NoClickAfterPhysicalMouseClickMs;
+
+            if (!string.IsNullOrWhiteSpace(settings.WavFileLocationMouseAssistOn) && settings.WavFileLocationMouseAssistOn.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+            {
+                try
+                {
+                    using (FileStream fileStream = File.OpenRead(settings.WavFileLocationMouseAssistOn))
+                    {
+                        fileStream.CopyTo(customMouseAssistOnSound);
+                    }
+                }
+                catch
+                {
+                    // Do nothing, keep empty file MemoryStream with which wavFileLocationMouseAssistOn has been initialized which with a length of 0 will trigger the default built in sounds.
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(settings.WavFileLocationMouseAssistOff) && settings.WavFileLocationMouseAssistOff.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+            {
+                try { 
+                        using (FileStream fileStream = File.OpenRead(settings.WavFileLocationMouseAssistOff))
+                        {
+                            fileStream.CopyTo(customMouseAssistOffSound);
+                        }
+                }
+                catch
+                {
+                    // Do nothing, keep empty file MemoryStream with which wavFileLocationMouseAssistOff has been initialized which with a length of 0 will trigger the default built in sounds.
+                }
+            }
 
             InitializeComponent();
             SetLastMouseClickPosition();
@@ -208,12 +239,26 @@ namespace NoMoreClick
             if(mouseClickAssistanceEnabled)
             {
                 mouseClickAssistanceEnabled = false;
-                PlaySound(Properties.Resources.mouse_assist_off);
+                if(customMouseAssistOffSound.Length != 0)
+                {
+                    PlaySound(customMouseAssistOffSound);
+                }
+                else
+                {
+                    PlaySound(Properties.Resources.mouse_assist_off);
+                }
             }
             else
             {
                 mouseClickAssistanceEnabled = true;
-                PlaySound(Properties.Resources.mouse_assist_on);
+                if (customMouseAssistOnSound.Length != 0)
+                {
+                    PlaySound(customMouseAssistOnSound);
+                }
+                else
+                {
+                    PlaySound(Properties.Resources.mouse_assist_on);
+                }
             }
         }
 
@@ -297,6 +342,7 @@ namespace NoMoreClick
         {
             using (SoundPlayer player = new SoundPlayer(stream))
             {
+                if (stream.CanSeek) stream.Seek(0, SeekOrigin.Begin);
                 await Task.Run(() => player.Play());
             }
         }
