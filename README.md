@@ -30,7 +30,7 @@ Windows:
 
 4. Fork this repository and clone the repository.
 
-> :information_source: After cloning the repository you will have the `master` branch checked out, as the main branch it contains a stable "production-ready" state of the source code. As this is not likely the most recent version of the code, you will want to checkout a branch; check the Projects tab for Issues *In Progress*.
+> After cloning the repository you will have the `master` branch checked out, as the main branch it contains a stable "production-ready" state of the source code. As this is not likely the most recent version of the code, you will want to checkout a branch; check the Projects tab for Issues *In Progress*.
 
 5. Using your IDE, open the project's `.sln` file. This will open the solution and projects within your IDE. Once open in the IDE, you are ready to go.
 
