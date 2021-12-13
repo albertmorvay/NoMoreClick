@@ -7,6 +7,8 @@ The motivation behind the creation and maintenance of this project is the same a
 
 ## Usage
 
+https://user-images.githubusercontent.com/5757588/145901651-3c9ddc1e-0319-40ec-9920-725427f4dfce.mp4
+
 With this software running:
 - Just move the mouse cursor over what you want to click and let the software do the clicking.
 
