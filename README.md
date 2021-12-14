@@ -7,7 +7,13 @@ The motivation behind the creation and maintenance of this project is the same a
 
 ## Usage
 
-https://user-images.githubusercontent.com/5757588/145901651-3c9ddc1e-0319-40ec-9920-725427f4dfce.mp4
+### How to download a pre-built copy
+
+https://user-images.githubusercontent.com/5757588/145997378-bb2fcdaa-2790-4962-93b5-6a54f614ad46.mp4
+
+### Introduction to core functionality
+
+https://user-images.githubusercontent.com/5757588/145997419-940327ef-e385-47b3-8aab-cdb78179bdeb.mp4
 
 With this software running:
 - Just move the mouse cursor over what you want to click and let the software do the clicking.
