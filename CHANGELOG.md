@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.12.0 - 2022-01-09
+### Added
+- Whilst Caps Lock is enabled, a double left click will be performed when the mouse stops; this is instead of the default single left click.
+
 ## 0.11.1 - 2021-12-12
 ### Fixed
 - Setup guardrails to initialize into a safe default state if appsettings.json is not present on startup or values are set too low by the user to an extent that is may cause unpredictable auto clicks.

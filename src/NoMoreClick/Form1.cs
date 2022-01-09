@@ -147,12 +147,28 @@ namespace NoMoreClick
         {
             if (mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick)
             {
-                MouseClickUtility.LeftClick(pointToClick);
+                if (Control.IsKeyLocked(Keys.CapsLock))
+                {
+                    MouseClickUtility.LeftClick(pointToClick);
+                    MouseClickUtility.LeftClick(pointToClick);
+                }
+                else
+                {
+                    MouseClickUtility.LeftClick(pointToClick);
+                }
                 SetLastMouseClickPosition();
             }
             else if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition, postClickDeadzoneRadius))
-            {
-                MouseClickUtility.LeftClick(pointToClick);
+            {                
+                if (Control.IsKeyLocked(Keys.CapsLock))
+                {
+                    MouseClickUtility.LeftClick(pointToClick);
+                    MouseClickUtility.LeftClick(pointToClick);
+                }
+                else
+                {
+                    MouseClickUtility.LeftClick(pointToClick);
+                }
                 SetLastMouseClickPosition();
             }
         }
