@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Gma.System.MouseKeyHook;
+using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Media;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
-using Config.Net;
-using Gma.System.MouseKeyHook;
 
 namespace NoMoreClick
 {
@@ -21,6 +21,7 @@ namespace NoMoreClick
         private DateTime dateTimeLastKeyboardInput = DateTime.UtcNow;
         private bool lastMouseClickWasARightClick = false;
         private bool mouseClickAssistanceEnabled = true;
+        private bool nextMouseClickIsADoubleClick = false;
         private DateTime dateTimeLeftMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
         private DateTime dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
@@ -34,64 +35,42 @@ namespace NoMoreClick
         private int noClickAfterPhysicalMouseClickMs = 600;
         private MemoryStream customMouseAssistOnSound = new MemoryStream();
         private MemoryStream customMouseAssistOffSound = new MemoryStream();
-        private IMySettings settings;
+        private  int _shiftClickCount;
+        private Stopwatch _shiftClickTimer;
+        private static IKeyboardMouseEvents _globalHook;
+        private static KeyEventArgs keyCode;
 
         public FormMain()
         {
             SetWindowLocationBottomRightAboveIconTray();
-
-            settings = new ConfigurationBuilder<IMySettings>()
-               .UseJsonConfig()
-               .Build();
-
-            if(settings.PostClickDeadzoneRadius > 0)
-                postClickDeadzoneRadius = settings.PostClickDeadzoneRadius;
-            if (settings.ClickDelayMs > 99)
-                clickDelayMs = settings.ClickDelayMs;
-            if (settings.ClickDelayAfterRightClickMs > 99)
-                clickDelayAfterRightClickMs = settings.ClickDelayAfterRightClickMs;
-            if (settings.ToggleClickAssistanceMs > 99)
-                toggleClickAssistanceMs = settings.ToggleClickAssistanceMs;
-            if (settings.NoClickAfterTypingMs > 99)
-                noClickAfterTypingMs = settings.NoClickAfterTypingMs;
-            if (settings.NoClickAfterScrollingMs > 99)
-                noClickAfterScrollingMs = settings.NoClickAfterScrollingMs;
-            if (settings.NoClickAfterPhysicalMouseClickMs > 99)
-                noClickAfterPhysicalMouseClickMs = settings.NoClickAfterPhysicalMouseClickMs;
-
-            if (!string.IsNullOrWhiteSpace(settings.WavFileLocationMouseAssistOn) && settings.WavFileLocationMouseAssistOn.IndexOfAny(Path.GetInvalidPathChars()) == -1)
-            {
-                try
-                {
-                    using (FileStream fileStream = File.OpenRead(settings.WavFileLocationMouseAssistOn))
-                    {
-                        fileStream.CopyTo(customMouseAssistOnSound);
-                    }
-                }
-                catch
-                {
-                    // Do nothing, keep empty file MemoryStream with which wavFileLocationMouseAssistOn has been initialized which with a length of 0 will trigger the default built in sounds.
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(settings.WavFileLocationMouseAssistOff) && settings.WavFileLocationMouseAssistOff.IndexOfAny(Path.GetInvalidPathChars()) == -1)
-            {
-                try { 
-                        using (FileStream fileStream = File.OpenRead(settings.WavFileLocationMouseAssistOff))
-                        {
-                            fileStream.CopyTo(customMouseAssistOffSound);
-                        }
-                }
-                catch
-                {
-                    // Do nothing, keep empty file MemoryStream with which wavFileLocationMouseAssistOff has been initialized which with a length of 0 will trigger the default built in sounds.
-                }
-            }
-
             InitializeComponent();
             SetLastMouseClickPosition();
             SetTimer();
             SubscribeGlobal();
+        }
+
+        private void ShiftKeyPress(object sender, KeyEventArgs e)
+        {
+            keyCode = e;
+            if (e.KeyCode == Keys.LShiftKey)
+            {
+                if (_shiftClickCount == 0)
+                {
+                    _shiftClickCount++;
+                    _shiftClickTimer.Start();
+                }
+                else if (_shiftClickCount == 1 && _shiftClickTimer.ElapsedMilliseconds <= 300)
+                {
+                    nextMouseClickIsADoubleClick = true;
+                    _shiftClickCount = 0;
+                    _shiftClickTimer.Reset();
+                }
+                else
+                {
+                    _shiftClickCount = 0;
+                    _shiftClickTimer.Reset();
+                }
+            }
         }
 
         private void SetTimer()
@@ -147,30 +126,27 @@ namespace NoMoreClick
         {
             if (mouseMovedOutsideOfClickDeadZoneAroundPreviousMousePositionWithoutStoppingToClick)
             {
-                if (Control.IsKeyLocked(Keys.CapsLock))
-                {
-                    MouseClickUtility.LeftClick(pointToClick);
-                    MouseClickUtility.LeftClick(pointToClick);
-                }
-                else
-                {
-                    MouseClickUtility.LeftClick(pointToClick);
-                }
-                SetLastMouseClickPosition();
+                PerformMouseClick(pointToClick);
             }
             else if (!MouseStillNearToWhereMouseWasBefore(pointToClick,pointLastMouseClickPosition, postClickDeadzoneRadius))
-            {                
-                if (Control.IsKeyLocked(Keys.CapsLock))
-                {
-                    MouseClickUtility.LeftClick(pointToClick);
-                    MouseClickUtility.LeftClick(pointToClick);
-                }
-                else
-                {
-                    MouseClickUtility.LeftClick(pointToClick);
-                }
-                SetLastMouseClickPosition();
+            {
+                PerformMouseClick(pointToClick);
             }
+        }
+
+        private void PerformMouseClick(Point pointToClick)
+        {
+            if (nextMouseClickIsADoubleClick)
+            {
+                MouseClickUtility.LeftClick(pointToClick);
+                MouseClickUtility.LeftClick(pointToClick);
+                nextMouseClickIsADoubleClick = false;
+            }
+            else
+            {
+                MouseClickUtility.LeftClick(pointToClick);
+            }
+            SetLastMouseClickPosition();
         }
 
         private void SubscribeGlobal()
@@ -184,7 +160,13 @@ namespace NoMoreClick
             m_Events = events;
           
             m_Events.KeyPress += HookManager_KeyPress;
-            
+
+            _shiftClickCount = 0;
+            _shiftClickTimer = new Stopwatch();
+            _globalHook = Hook.GlobalEvents();
+            _globalHook.KeyUp += ShiftKeyPress;
+
+
             m_Events.MouseClick += OnMouseClick;
             m_Events.MouseDown += OnMouseDown;
             m_Events.MouseUp += OnMouseUp;
@@ -204,6 +186,8 @@ namespace NoMoreClick
             m_Events.MouseDragStarted -= OnMouseDragStarted;
             m_Events.MouseDragFinished -= OnMouseDragFinished;
             m_Events.MouseWheel -= HookManager_MouseWheel;
+
+            _globalHook.Dispose();
 
             m_Events.Dispose();
             m_Events = null;
