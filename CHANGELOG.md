@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
+## 0.12.3 - 2023-07-09
+### Added
+- Basic user interface to allow users to manage application settings. The UI includes controls for customizing all options previously available through the config file. At this time it does not persist user changes.
+### Fixed
+- Addressed a potential resource leak issue by ensuring the old global hook is properly disposed of before a new instance is created. This prevents unnecessary accumulation of unused resources and improves the application's performance.
+- Resolved an issue in the initialization and event hooking process where global events were being subscribed to twice. This fix ensures events will only be fired once, preventing potential confusion or unexpected behavior.
+
 ## 0.12.2 - 2023-07-09
 ### Added
 - Updated packages to their latest versions.
@@ -16,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.12.0 - 2022-01-09
 ### Added
 - Whilst Caps Lock is enabled, a double left click will be performed when the mouse stops; this is instead of the default single left click.
+### Removed
+- Deprecated the configuration file-based system for managing application settings. This method was found to be less user-friendly and harder to manage, especially for non-technical users.
 
 ## 0.11.1 - 2021-12-12
 ### Fixed
