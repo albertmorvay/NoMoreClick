@@ -362,8 +362,9 @@ namespace NoMoreClick
         private void SetWindowLocationBottomRightAboveIconTray()
         {
             Rectangle primaryScreenWorkingArea = Screen.PrimaryScreen.Bounds;
-            this.Location = new Point(primaryScreenWorkingArea.Right - this.Size.Width -13,
-                                      primaryScreenWorkingArea.Bottom - (this.Size.Height - 27));
+            // TODO: Fix hardcoded height below:
+            this.Location = new Point(primaryScreenWorkingArea.Right - Size.Width -13,
+                                      primaryScreenWorkingArea.Bottom - (610 + 27));
         }
 
         protected override void WndProc(ref Message m)
