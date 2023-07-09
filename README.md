@@ -59,6 +59,5 @@ This project is licensed under the MIT License - see the [LICENSE file](LICENSE)
 ## Dependencies
 
 - [globalmousekeyhook](https://github.com/gmamaladze/globalmousekeyhook) licensed under the [MIT License](https://github.com/gmamaladze/globalmousekeyhook/blob/vNext/LICENSE.txt)
-- [Config.Net.Json](https://github.com/aloneguid/config) licensed under the [MIT License](https://github.com/aloneguid/config/blob/master/LICENSE)
 
 *The above is not an exhaustive list of dependencies, as these will by necessity also introduce their own dependencies to the solutions, for details please check the respective packages.*

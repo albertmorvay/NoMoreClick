@@ -35,10 +35,9 @@ namespace NoMoreClick
         private int noClickAfterPhysicalMouseClickMs = 600;
         private MemoryStream customMouseAssistOnSound = new MemoryStream();
         private MemoryStream customMouseAssistOffSound = new MemoryStream();
-        private  int _shiftClickCount;
-        private Stopwatch _shiftClickTimer;
+        private  int _shiftClickCount = 0;
+        private Stopwatch _shiftClickTimer = new Stopwatch();
         private static IKeyboardMouseEvents _globalHook;
-        private static KeyEventArgs keyCode;
 
         public FormMain()
         {
@@ -51,7 +50,6 @@ namespace NoMoreClick
 
         private void ShiftKeyPress(object sender, KeyEventArgs e)
         {
-            keyCode = e;
             if (e.KeyCode == Keys.LShiftKey)
             {
                 if (_shiftClickCount == 0)
@@ -161,8 +159,6 @@ namespace NoMoreClick
           
             m_Events.KeyPress += HookManager_KeyPress;
 
-            _shiftClickCount = 0;
-            _shiftClickTimer = new Stopwatch();
             _globalHook = Hook.GlobalEvents();
             _globalHook.KeyUp += ShiftKeyPress;
 
