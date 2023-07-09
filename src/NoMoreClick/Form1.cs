@@ -15,7 +15,7 @@ namespace NoMoreClick
         private IKeyboardMouseEvents m_Events;
         public static Point pointLastMousePosition;
         public static Point pointLastMouseClickPosition;
-        private static System.Timers.Timer aTimer;
+        private static System.Timers.Timer programStateEvaluationTimer;
         private static System.Timers.Timer TimerToggleMouseClickAssistance;
         private bool mouseIsBeingDragged = false;
         private DateTime dateTimeLastKeyboardInput = DateTime.UtcNow;
@@ -33,55 +33,41 @@ namespace NoMoreClick
         private int noClickAfterTypingMs = 1000;
         private int noClickAfterScrollingMs = 1000;
         private int noClickAfterPhysicalMouseClickMs = 600;
+        private int doubleClickThresholdToPressShiftKeyMs = 300;
         private MemoryStream customMouseAssistOnSound = new MemoryStream();
         private MemoryStream customMouseAssistOffSound = new MemoryStream();
         private  int _shiftClickCount = 0;
         private Stopwatch _shiftClickTimer = new Stopwatch();
-        private static IKeyboardMouseEvents _globalHook;
 
         public FormMain()
         {
             SetWindowLocationBottomRightAboveIconTray();
             InitializeComponent();
             SetLastMouseClickPosition();
-            SetTimer();
+            SetupProgramStateEvaluationTimer();
             SubscribeGlobal();
+
+            numericUpDownPostClickDeadzoneRadius.Value = postClickDeadzoneRadius;
+            numericUpDownClickDelayMs.Value = clickDelayMs;
+            numericUpDownDelayAfterRightClickMs.Value = clickDelayAfterRightClickMs;
+            numericUpDownToggleClickAssistanceMs.Value = toggleClickAssistanceMs;
+            numericUpDownNoClickAfterTypingMs.Value = noClickAfterTypingMs;
+            numericUpDownNoClickAfterScrollingMs.Value = noClickAfterScrollingMs;
+            numericUpDownNoClickAfterPhysicalMouseClickMs.Value = noClickAfterPhysicalMouseClickMs;
+            numericUpDownDoubleClickThresholdToPressShiftKeyMs.Value = doubleClickThresholdToPressShiftKeyMs;
         }
 
-        private void ShiftKeyPress(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.LShiftKey)
-            {
-                if (_shiftClickCount == 0)
-                {
-                    _shiftClickCount++;
-                    _shiftClickTimer.Start();
-                }
-                else if (_shiftClickCount == 1 && _shiftClickTimer.ElapsedMilliseconds <= 300)
-                {
-                    nextMouseClickIsADoubleClick = true;
-                    _shiftClickCount = 0;
-                    _shiftClickTimer.Reset();
-                }
-                else
-                {
-                    _shiftClickCount = 0;
-                    _shiftClickTimer.Reset();
-                }
-            }
-        }
-
-        private void SetTimer()
+        private void SetupProgramStateEvaluationTimer()
         {
             // Create a timer with a two second interval.
-            aTimer = new System.Timers.Timer(100);
+            programStateEvaluationTimer = new System.Timers.Timer(100);
             // Hook up the Elapsed event for the timer. 
-            aTimer.Elapsed += OnTimedEvent;
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
+            programStateEvaluationTimer.Elapsed += EvaluateProgramState;
+            programStateEvaluationTimer.AutoReset = true;
+            programStateEvaluationTimer.Enabled = true;
         }
 
-        private void OnTimedEvent(Object source, ElapsedEventArgs e)
+        private void EvaluateProgramState(Object source, ElapsedEventArgs e)
         {
             if (!MouseStillNearToWhereMouseWasBefore(Cursor.Position, pointLastMouseClickPosition, postClickDeadzoneRadius))
             {
@@ -158,10 +144,7 @@ namespace NoMoreClick
             m_Events = events;
           
             m_Events.KeyPress += HookManager_KeyPress;
-
-            _globalHook = Hook.GlobalEvents();
-            _globalHook.KeyUp += ShiftKeyPress;
-
+            m_Events.KeyUp += ShiftKeyPress;
 
             m_Events.MouseClick += OnMouseClick;
             m_Events.MouseDown += OnMouseDown;
@@ -183,8 +166,6 @@ namespace NoMoreClick
             m_Events.MouseDragFinished -= OnMouseDragFinished;
             m_Events.MouseWheel -= HookManager_MouseWheel;
 
-            _globalHook.Dispose();
-
             m_Events.Dispose();
             m_Events = null;
         }
@@ -204,7 +185,7 @@ namespace NoMoreClick
             if (e.Button == MouseButtons.Right)
             {
                 dateTimeRightMouseClickPressedDown = DateTime.UtcNow;
-                SetTimerToggleMouseClickAssistance();
+                InitializeClickAssistanceTimer();
             }
         }
 
@@ -221,7 +202,7 @@ namespace NoMoreClick
             dateTimeLastMouseScrollWheelInput = DateTime.UtcNow;
         }
 
-        private void SetTimerToggleMouseClickAssistance()
+        private void InitializeClickAssistanceTimer()
         {
             // Create a timer with a two second interval.
             TimerToggleMouseClickAssistance = new System.Timers.Timer(toggleClickAssistanceMs);
@@ -320,6 +301,29 @@ namespace NoMoreClick
             return result;
         }
 
+        private void ShiftKeyPress(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.LShiftKey)
+            {
+                if (_shiftClickCount == 0)
+                {
+                    _shiftClickCount++;
+                    _shiftClickTimer.Start();
+                }
+                else if (_shiftClickCount == 1 && _shiftClickTimer.ElapsedMilliseconds <= doubleClickThresholdToPressShiftKeyMs)
+                {
+                    nextMouseClickIsADoubleClick = true;
+                    _shiftClickCount = 0;
+                    _shiftClickTimer.Reset();
+                }
+                else
+                {
+                    _shiftClickCount = 0;
+                    _shiftClickTimer.Reset();
+                }
+            }
+        }
+
         private bool DateTimeUtcIsWithinMillisecondsOfNowUtc(DateTime dateTimeUtc, int milliseconds)
         {
             var result = false;
@@ -381,7 +385,7 @@ namespace NoMoreClick
             notifyIcon1.ShowBalloonTip(3000);
         }
 
-        private void RestoreForm()
+        private void BringFormToFront()
         {
             Show();
             ShowInTaskbar = true;
@@ -391,17 +395,58 @@ namespace NoMoreClick
 
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            RestoreForm();
+            BringFormToFront();
         }
 
         private void restoreToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            RestoreForm();
+            BringFormToFront();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
         }
+
+        private void numericUpDownPostClickDeadzoneRadius_ValueChanged(object sender, EventArgs e)
+        {
+            postClickDeadzoneRadius = (int)numericUpDownPostClickDeadzoneRadius.Value;
+        }
+
+        private void numericUpDownClickDelayMs_ValueChanged(object sender, EventArgs e)
+        {
+            clickDelayMs = (int)numericUpDownClickDelayMs.Value;
+        }
+
+        private void numericUpDownDelayAfterRightClickMs_ValueChanged(object sender, EventArgs e)
+        {
+            clickDelayAfterRightClickMs = (int)numericUpDownDelayAfterRightClickMs.Value;
+        }
+
+        private void numericUpDownToggleClickAssistanceMs_ValueChanged(object sender, EventArgs e)
+        {
+            toggleClickAssistanceMs = (int)numericUpDownToggleClickAssistanceMs.Value;
+        }
+
+        private void numericUpDownNoClickAfterTypingMs_ValueChanged(object sender, EventArgs e)
+        {
+            noClickAfterTypingMs = (int)numericUpDownNoClickAfterTypingMs.Value;
+        }
+
+        private void numericUpDownNoClickAfterScrollingMs_ValueChanged(object sender, EventArgs e)
+        {
+            noClickAfterScrollingMs = (int)numericUpDownNoClickAfterScrollingMs.Value;
+        }
+
+        private void numericUpDownNoClickAfterPhysicalMouseClickMs_ValueChanged(object sender, EventArgs e)
+        {
+            noClickAfterPhysicalMouseClickMs = (int)numericUpDownNoClickAfterPhysicalMouseClickMs.Value;
+        }
+
+        private void numericUpDownDoubleClickThresholdToPressShiftKeyMs_ValueChanged(object sender, EventArgs e)
+        {
+            doubleClickThresholdToPressShiftKeyMs = (int)numericUpDownDoubleClickThresholdToPressShiftKeyMs.Value;
+        }
+
     }
 }
