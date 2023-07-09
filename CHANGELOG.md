@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - https://github.com/albertmorvay/NoMoreClick/labels/enhancement
 
-## 0.12.0 - 2023-07-09
+## 0.12.2 - 2023-07-09
 ### Added
 - Updated packages to their latest versions.
 - Removed the Config.Net.Json dependency from the project.
