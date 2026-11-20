@@ -42,6 +42,9 @@ internal static class MouseClickUtility
         return false;
     }
 
+    public static bool TrySetRightButton(bool down) =>
+        SendInput(1, [CreateMouseInput(down ? RightDown : RightUp)], InputSize) == 1;
+
     private static Input CreateMouseInput(uint flags) => new()
     {
         Type = InputMouse,

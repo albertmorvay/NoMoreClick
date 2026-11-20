@@ -77,7 +77,7 @@ internal sealed class GlobalInput : IDisposable
     }
 
     public event Action<GlobalKeyEvent>? KeyChanged;
-    public event Action<GlobalMouseEvent>? MouseChanged;
+    public Func<GlobalMouseEvent, bool>? HandleMouseEvent { get; set; }
     public Exception? CallbackError { get; private set; }
 
     // Use a virtual key such as Keys.ControlKey or Keys.LButton, and poll outside a hook callback.
@@ -146,7 +146,7 @@ internal sealed class GlobalInput : IDisposable
 
     private nint HandleMouse(int code, nuint message, nint data)
     {
-        if (code == HookAction && !disposed && CallbackError is null && MouseChanged is { } callback)
+        if (code == HookAction && !disposed && CallbackError is null && HandleMouseEvent is { } callback)
         {
             try
             {
@@ -155,7 +155,8 @@ internal sealed class GlobalInput : IDisposable
                 if ((!injected || input.ExtraInfo != MouseClickUtility.InjectedClickTag) &&
                     DecodeMouseMessage((uint)message, input.MouseData) is { } mouse)
                 {
-                    callback(new(mouse.Kind, new Point(input.X, input.Y), mouse.Button, injected));
+                    if (callback(new(mouse.Kind, new Point(input.X, input.Y), mouse.Button, injected)))
+                        return 1;
                 }
             }
             catch (Exception error)

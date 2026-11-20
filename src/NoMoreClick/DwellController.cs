@@ -11,7 +11,6 @@ internal sealed class DwellController(Point startingPosition, long startedAt)
     private bool leftDeadzone;
     private bool doubleClickArmed;
     private long? lastShiftRelease;
-    private long? rightButtonPressedAt;
     private bool manualClickInProgress;
     private int? pendingManualDwell;
     private int? completedManualDwell;
@@ -44,7 +43,6 @@ internal sealed class DwellController(Point startingPosition, long startedAt)
         manualClickInProgress = false;
         pendingManualDwell = null;
         completedManualDwell = null;
-        rightButtonPressedAt = null;
         RearmFrom(position);
     }
 
@@ -102,7 +100,6 @@ internal sealed class DwellController(Point startingPosition, long startedAt)
                 BlockUntil(now + Settings.PhysicalClickCooldownMs);
                 if (input.Button == MouseButtons.Right)
                 {
-                    rightButtonPressedAt = null;
                     BlockUntil(now + Settings.RightClickCooldownMs);
                 }
                 if (input.Button == MouseButtons.Left)
@@ -110,17 +107,6 @@ internal sealed class DwellController(Point startingPosition, long startedAt)
                 break;
         }
         return false;
-    }
-
-    public bool TakeRightButtonHold(long now, bool rightButtonDown)
-    {
-        if (!rightButtonDown)
-            rightButtonPressedAt = null;
-        if (rightButtonPressedAt is not long pressedAt || now - pressedAt < Settings.RightButtonHoldMs)
-            return false;
-
-        rightButtonPressedAt = null;
-        return true;
     }
 
     public ClickRequest? Evaluate(Point position, long now, bool mouseButtonHeld, bool blockedByUi,
@@ -163,9 +149,6 @@ internal sealed class DwellController(Point startingPosition, long startedAt)
 
     private void ObserveButtonDown(GlobalMouseEvent input, long now)
     {
-        if (input.Button == MouseButtons.Right && !input.IsInjected)
-            rightButtonPressedAt = now;
-
         if (input.Button == MouseButtons.Left)
         {
             manualClickInProgress = !input.IsInjected;

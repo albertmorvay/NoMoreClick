@@ -26,7 +26,7 @@ With this software running:
 
 Run the self-contained Windows x64 build to use NoMoreClick without a separate runtime installation. A framework-dependent build requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
-NoMoreClick starts in the notification area. Open the tray menu to pause, resume, change settings, or exit. You can also hold the right mouse button for about one second to toggle assistance.
+NoMoreClick starts in the notification area. Open the tray menu to pause, resume, change settings, or exit. You can also hold the right mouse button still until the dot brightens, then release it to toggle assistance. This takes about one second by default. A right-button drag uses the ordinary drag gesture.
 
 - Hold Ctrl while dwelling to pass Ctrl+click through to the foreground app.
 - Hold Alt while dwelling to right-click. You can change or disable this modifier in Settings.
