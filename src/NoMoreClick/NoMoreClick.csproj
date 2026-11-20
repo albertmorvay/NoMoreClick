@@ -7,14 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>click-ico-by-pixel-perfect-from-flaticon.ico</ApplicationIcon>
-    <Version>0.13.0</Version>
+    <Version>0.13.1</Version>
     <Company>Albert Morvay</Company>
     <Description>Check out github.com/albertmorvay/NoMoreClick</Description>
     <Copyright>Copyright © 2021 Albert Morvay Some Rights Reserved MIT License</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
-    <EmbeddedResource Include="Resources/mouse-assist-on.wav" LogicalName="NoMoreClick.AssistOn" />
-    <EmbeddedResource Include="Resources/mouse-assist-off.wav" LogicalName="NoMoreClick.AssistOff" />
   </ItemGroup>
 </Project>

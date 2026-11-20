@@ -1,22 +1,24 @@
-using System.Media;
-using System.Reflection;
-
 namespace NoMoreClick;
 
 internal sealed class TrayApplicationContext : ApplicationContext
 {
+    private const int HoldCueDelayMs = 120;
+
     private readonly GlobalInput input;
     private readonly DwellController dwell = new(Cursor.Position, Environment.TickCount64);
     private readonly TextFocusMonitor textFocus = new();
+    private readonly RightButtonGesture rightGesture = new();
     private readonly System.Windows.Forms.Timer timer = new() { Interval = 20 };
+    private readonly long startupNoticeAt;
     private readonly Icon icon;
     private readonly NotifyIcon tray;
     private readonly ContextMenuStrip menu = new();
     private readonly ToolStripMenuItem status = new() { Enabled = false };
     private readonly ToolStripMenuItem toggle = new();
-    private readonly SoundPlayer enabledSound = CreateSound("NoMoreClick.AssistOn");
-    private readonly SoundPlayer pausedSound = CreateSound("NoMoreClick.AssistOff");
     private SettingsDialog? settingsWindow;
+    private AssistanceRipple? ripple;
+    private bool toggleRequested;
+    private bool replayedRightDown;
     private bool restoringSettings;
     private bool inputFailed;
     private bool disposed;
@@ -25,7 +27,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         input = new GlobalInput();
         input.KeyChanged += inputEvent => dwell.ObserveKey(inputEvent, Environment.TickCount64);
-        input.MouseChanged += ObserveMouse;
+        input.HandleMouseEvent = ObserveMouse;
 
         icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? (Icon)SystemIcons.Application.Clone();
         toggle.Click += (_, _) => ToggleAssistance();
@@ -42,6 +44,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         };
         UpdateTrayStatus();
         tray.Visible = true;
+        startupNoticeAt = Environment.TickCount64 + 500;
 
         // Give Explorer time to register the tray icon before showing the first notification.
         timer.Tick += AnnounceStartup;
@@ -51,15 +54,41 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void AnnounceStartup(object? sender, EventArgs e)
     {
+        if (Environment.TickCount64 < startupNoticeAt)
+            return;
+
         timer.Tick -= AnnounceStartup;
-        ShowTrayMessage("NoMoreClick is running in the notification area. Open its tray menu to pause or change settings.");
+        ShowTrayMessage("👇 Running in the system tray. Right-click the icon for controls.", timeoutMs: 10000);
+        if (!rightGesture.IsHolding && !inputFailed)
+            ShowAssistanceRipple(Cursor.Position);
     }
 
-    private void ObserveMouse(GlobalMouseEvent mouseEvent)
+    private bool ObserveMouse(GlobalMouseEvent mouseEvent)
     {
         long now = Environment.TickCount64;
         if (dwell.ObserveMouse(mouseEvent, now) && dwell.Enabled && dwell.Settings.ProtectTextFields)
             textFocus.ObserveLeftClick(now, mouseEvent.Position);
+
+        switch (rightGesture.Observe(mouseEvent, now, dwell.Settings.RightButtonHoldMs))
+        {
+            case RightGestureAction.Suppress:
+                return true;
+            case RightGestureAction.BeginDrag:
+                replayedRightDown = MouseClickUtility.TrySetRightButton(down: true);
+                return false;
+            case RightGestureAction.EndDrag:
+                if (!replayedRightDown)
+                    return false;
+                replayedRightDown = false;
+                return MouseClickUtility.TrySetRightButton(down: false);
+            case RightGestureAction.Click:
+                return MouseClickUtility.TryClick(MouseButtons.Right);
+            case RightGestureAction.Toggle:
+                toggleRequested = true;
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void Evaluate(object? sender, EventArgs e)
@@ -75,12 +104,24 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         long now = Environment.TickCount64;
-        bool rightDown = GlobalInput.IsKeyDown(Keys.RButton);
-        if (dwell.TakeRightButtonHold(now, rightDown))
+        if (toggleRequested)
+        {
+            toggleRequested = false;
             ToggleAssistance();
+        }
+        else if (rightGesture.GetHoldProgress(now, dwell.Settings.RightButtonHoldMs) is float progress
+            && progress >= (float)HoldCueDelayMs / dwell.Settings.RightButtonHoldMs)
+        {
+            ripple ??= new AssistanceRipple();
+            ripple.ShowHoldAt(rightGesture.PressOrigin, !dwell.Enabled, progress);
+        }
+        else
+        {
+            ripple?.ClearHold();
+        }
 
         bool textProtected = dwell.Settings.ProtectTextFields && textFocus.ShouldSuppressDwell(now);
-        bool mouseHeld = rightDown || GlobalInput.IsKeyDown(Keys.LButton)
+        bool mouseHeld = rightGesture.IsHolding || GlobalInput.IsKeyDown(Keys.RButton) || GlobalInput.IsKeyDown(Keys.LButton)
             || GlobalInput.IsKeyDown(Keys.MButton) || GlobalInput.IsKeyDown(Keys.XButton1)
             || GlobalInput.IsKeyDown(Keys.XButton2);
         bool control = GlobalInput.IsKeyDown(Keys.ControlKey);
@@ -115,21 +156,21 @@ internal sealed class TrayApplicationContext : ApplicationContext
             return;
 
         SetAssistance(!dwell.Enabled);
-        try
-        {
-            (dwell.Enabled ? enabledSound : pausedSound).Play();
-        }
-        catch (InvalidOperationException error)
-        {
-            System.Diagnostics.Trace.TraceWarning("Could not play the assistance sound: {0}", error.Message);
-        }
     }
 
     private void SetAssistance(bool enabled)
     {
-        dwell.SetEnabled(enabled, Cursor.Position);
+        Point pointer = Cursor.Position;
+        dwell.SetEnabled(enabled, pointer);
         textFocus.Reset();
         UpdateTrayStatus();
+        ShowAssistanceRipple(pointer);
+    }
+
+    private void ShowAssistanceRipple(Point pointer)
+    {
+        ripple ??= new AssistanceRipple();
+        ripple.ShowAt(pointer, dwell.Enabled);
     }
 
     private void UpdateTrayStatus()
@@ -141,8 +182,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
         toggle.Enabled = !inputFailed;
     }
 
-    private void ShowTrayMessage(string message, ToolTipIcon tipIcon = ToolTipIcon.Info) =>
-        tray.ShowBalloonTip(3000, "NoMoreClick", message, tipIcon);
+    private void ShowTrayMessage(string message, ToolTipIcon tipIcon = ToolTipIcon.Info, int timeoutMs = 3000) =>
+        tray.ShowBalloonTip(timeoutMs, "NoMoreClick", message, tipIcon);
 
     private void ShowSettings()
     {
@@ -188,19 +229,15 @@ internal sealed class TrayApplicationContext : ApplicationContext
             disposed = true;
             timer.Dispose();
             input.Dispose();
+            if (replayedRightDown)
+                MouseClickUtility.TrySetRightButton(down: false);
             settingsWindow?.Dispose();
             tray.Visible = false;
             tray.Dispose();
             menu.Dispose();
             icon.Dispose();
-            enabledSound.Stream?.Dispose();
-            enabledSound.Dispose();
-            pausedSound.Stream?.Dispose();
-            pausedSound.Dispose();
+            ripple?.Dispose();
         }
         base.Dispose(disposing);
     }
-
-    private static SoundPlayer CreateSound(string name) =>
-        new(Assembly.GetExecutingAssembly().GetManifestResourceStream(name));
 }

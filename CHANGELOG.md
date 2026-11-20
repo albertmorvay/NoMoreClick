@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## 0.13.1 - 2026-11-20
+
+### Changed
+- Replaced assistance sounds with a pointer ripple and removed the bundled audio.
+- Show a short tray notification at startup with directions to the controls.
+
+### Fixed
+- Show hold progress and consume completed stationary right-button holds without opening a context menu. Cancel the toggle and suppress extra right-clicks when another button is held.
+
 ## 0.13.0 - 2026-11-20
 ### Added
 - Tray-first startup with Pause, Resume, Settings, and Exit.
