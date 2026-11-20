@@ -1,0 +1,88 @@
+name: Windows Release
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - .github/workflows/windows-release.yml
+      - src/**
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish a GitHub Release for the version in the project
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64
+    runs-on: windows-2025
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+        with:
+          dotnet-version: '10.0.x'
+          skip-lts-prepass: true
+
+      - name: Read project version
+        id: version
+        shell: pwsh
+        run: |
+          $version = dotnet msbuild src/NoMoreClick/NoMoreClick.csproj -getProperty:Version
+          if ($LASTEXITCODE -ne 0 -or $version -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'Expected a numeric major.minor.patch version.'
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish self-contained executable
+        shell: pwsh
+        run: |
+          $publish = Join-Path $env:RUNNER_TEMP 'nomoreclick-publish'
+          dotnet publish src/NoMoreClick/NoMoreClick.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded --output $publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Rename-Item -LiteralPath (Join-Path $publish 'NoMoreClick.exe') -NewName 'NoMoreClick-win-x64.exe'
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: NoMoreClick-win-x64
+          path: ${{ runner.temp }}/nomoreclick-publish/NoMoreClick-win-x64.exe
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  release:
+    name: Publish GitHub Release
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && inputs.publish_release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows executable
+        uses: actions/download-artifact@v8
+        with:
+          name: NoMoreClick-win-x64
+
+      - name: Publish release and executable
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.build.outputs.version }}
+        run: |
+          gh release create "$RELEASE_TAG" NoMoreClick-win-x64.exe \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "NoMoreClick $RELEASE_TAG" \
+            --generate-notes

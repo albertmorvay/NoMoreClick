@@ -50,6 +50,12 @@ dotnet publish src/NoMoreClick/NoMoreClick.csproj -c Release -r win-x64 --self-c
 
 You can also open `src/NoMoreClick.sln` in an IDE that supports .NET 10.
 
+### Build or publish with GitHub Actions
+
+Open the **Windows Release** workflow in the repository’s Actions tab and select **Run workflow**. Run it on `master` to build a Windows x64 executable on GitHub’s standard Windows runner. The executable is available under **Artifacts** when the run completes.
+
+To publish a release, first update the version in `src/NoMoreClick/NoMoreClick.csproj` and merge it into `master`. Select **Publish a GitHub Release for the version in the project** when starting the workflow. GitHub attaches the executable to the new version’s release.
+
 ## Contributing
 
 1. Fork it (<https://github.com/albertmorvay/NoMoreClick/fork>)
