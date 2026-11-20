@@ -5,7 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- https://github.com/albertmorvay/NoMoreClick/labels/enhancement
+### Added
+- Tray-first startup with Pause, Resume, Settings, and Exit.
+- Ctrl+click support and a configurable held modifier for dwell right-click.
+- A short dwell pause after clicking into a supported editable text field.
+- Opt-in adaptive dwell delay based on recent physical clicks.
+
+### Changed
+- Migrated to .NET 10 and replaced MouseKeyHook with Windows input APIs. Removed stale NuGet references.
+- Preserved click cooldowns, drag protection, the long right-button toggle, and the left Shift double-tap gesture.
+
+### Fixed
+- Restored an explicit notification when minimizing settings to the tray.
 
 ## 0.12.3 - 2023-07-09
 ### Added

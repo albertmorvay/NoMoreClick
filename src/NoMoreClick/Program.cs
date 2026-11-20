@@ -1,54 +1,43 @@
-﻿using System;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Windows;
-using System.Windows.Forms;
 
-namespace NoMoreClick
+namespace NoMoreClick;
+
+internal static class Program
 {
-    static class Program
-    {
-        [DllImport("user32.dll")]
-        [
-            return: MarshalAs(UnmanagedType.Bool)
-        ]
-        static extern bool SetForegroundWindow(IntPtr hWnd);
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            if (SystemParameters.SnapToDefaultButton)
-            {
-                System.Windows.Forms.MessageBox.Show("Mouse cursor setting snap-to-default is enabled; please turn this off to use this version of the software!\n\nCurrently the mouse cursor on this computer will automatically move to the default button of a dialog box, such as OK or Apply.\n\nYou can turn this off under:\n\n'Mouse Properties' -> 'Pointer Options'.\n\nFurther guidance here https://superuser.com/a/1177277\n\nThis application will stop running now.", "NoMoreClick - ACTION REQUIRED - PLEASE READ CAREFULLY", System.Windows.Forms.MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }else
-            {
-                bool createdNew = true;
-                using (Mutex mutex = new Mutex(true, "NoMoreClick-6b71c0b6-972a-4385-b574-fcda2169d93e", out createdNew))
-                {
-                    if (createdNew)
-                    {
+    private const uint GetSnapToDefaultButton = 0x005F;
 
-                        System.Windows.Forms.Application.EnableVisualStyles();
-                        System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
-                        System.Windows.Forms.Application.Run(new FormMain());
-                    }
-                    else
-                    {
-                        Process current = Process.GetCurrentProcess();
-                        foreach (Process process in Process.GetProcessesByName(current.ProcessName))
-                        {
-                            if (process.Id != current.Id)
-                            {
-                                SetForegroundWindow(process.MainWindowHandle);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+    [STAThread]
+    private static void Main()
+    {
+        ApplicationConfiguration.Initialize();
+
+        using var singleInstance = new Mutex(true, "NoMoreClick-6b71c0b6-972a-4385-b574-fcda2169d93e", out bool firstInstance);
+        if (!firstInstance)
+            return;
+
+        if (SystemParametersInfo(GetSnapToDefaultButton, 0, out int snapToDefault, 0) && snapToDefault != 0)
+        {
+            MessageBox.Show(
+                "Turn off Snap To under Mouse Properties → Pointer Options before starting NoMoreClick. "
+                + "Windows can move the pointer to a dialog's default button, where dwell clicking could activate it.",
+                "NoMoreClick", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            using var tray = new TrayApplicationContext();
+            Application.Run(tray);
+        }
+        catch (Win32Exception error)
+        {
+            MessageBox.Show($"NoMoreClick could not monitor mouse and keyboard input.\n\n{error.Message}",
+                "NoMoreClick", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
+
+    [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SystemParametersInfo(uint action, uint parameter, out int value, uint flags);
 }
