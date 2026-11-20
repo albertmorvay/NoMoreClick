@@ -24,24 +24,31 @@ With this software running:
 
 ## Installation
 
-1. Install [.NET Framework 4.8 Runtime](https://dotnet.microsoft.com/download/dotnet-framework/net48) or higher.
-2. // TODO: for v1.00
+Run the self-contained Windows x64 build to use NoMoreClick without a separate runtime installation. A framework-dependent build requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
+NoMoreClick starts in the notification area. Open the tray menu to pause, resume, change settings, or exit. You can also hold the right mouse button for about one second to toggle assistance.
+
+- Hold Ctrl while dwelling to pass Ctrl+click through to the foreground app.
+- Hold Alt while dwelling to right-click. You can change or disable this modifier in Settings.
+- Tap left Shift twice to make the next unmodified dwell click a double-click.
+- After a click focuses a supported writable text field, assistance briefly pauses so you can start typing.
+- Adaptive delay is optional. It starts at your configured dwell delay and learns from recent manual clicks, within 25% of that delay. Settings and learned timing apply to the current session.
 
 ## Development setup
 
-Windows:
-1. Install your favorite Integrated Development Environment (IDE) for C# e.g. [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) or [Jetbrains Rider](https://www.jetbrains.com/rider/).
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) on Windows. Use this command to build the cloned repository.
 
-2. With an IDE installed, ensure that you have the [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) installed.
+```powershell
+dotnet build src/NoMoreClick.sln -c Release
+```
 
-3. If you haven't already install [Git](https://git-scm.com/downloads) and/or your preferred Git client e.g. [Github Desktop](https://desktop.github.com/) to gain access to the code.
+Use this command to publish a self-contained Windows x64 executable.
 
-4. Fork this repository and clone the repository.
+```powershell
+dotnet publish src/NoMoreClick/NoMoreClick.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=embedded
+```
 
-> After cloning the repository you will have the `master` branch checked out, as the main branch it contains a stable "production-ready" state of the source code. As this is not likely the most recent version of the code, you will want to checkout a branch; check the Projects tab for Issues *In Progress*.
-
-5. Using your IDE, open the project's `.sln` file. This will open the solution and projects within your IDE. Once open in the IDE, you are ready to go.
-
+You can also open `src/NoMoreClick.sln` in an IDE that supports .NET 10.
 
 ## Contributing
 
@@ -58,6 +65,4 @@ This project is licensed under the MIT License - see the [LICENSE file](LICENSE)
 
 ## Dependencies
 
-- [globalmousekeyhook](https://github.com/gmamaladze/globalmousekeyhook) licensed under the [MIT License](https://github.com/gmamaladze/globalmousekeyhook/blob/vNext/LICENSE.txt)
-
-*The above is not an exhaustive list of dependencies, as these will by necessity also introduce their own dependencies to the solutions, for details please check the respective packages.*
+NoMoreClick uses WinForms, Windows UI Automation, and the Windows input APIs. The application has no third-party NuGet packages. See [third-party asset attribution](LICENSE-THIRD-PARTY.md) for the bundled icon.
