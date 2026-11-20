@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>click-ico-by-pixel-perfect-from-flaticon.ico</ApplicationIcon>
-    <Version>0.12.3</Version>
+    <Version>0.13.0</Version>
     <Company>Albert Morvay</Company>
     <Description>Check out github.com/albertmorvay/NoMoreClick</Description>
     <Copyright>Copyright © 2021 Albert Morvay Some Rights Reserved MIT License</Copyright>
